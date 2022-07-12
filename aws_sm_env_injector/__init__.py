@@ -6,7 +6,7 @@ import boto3
 
 client = boto3.client("secretsmanager", endpoint_url=os.getenv("AWS_SECRETSMANAGER_ENDPOINT"))
 
-PREFIX = "secretsmanager-inject"
+PREFIX = "aws-secretsmanager-inject"
 
 
 class MisconfigurationException(Exception):
@@ -29,15 +29,17 @@ def inject_secrets_into_env():
                     else:
                         args['VersionId'] = version
                 try:
-                    secret_value = client.get_secret_value(**args)
-                    if config.get("mode") == "expand":
-                        output.update(json.loads(secret_value['SecretString']))
-                    output[name] = secret_value['SecretString']
+                    secret_value = client.get_secret_value(**args)['SecretString']
+
                 except client.exceptions.ResourceNotFoundException:
                     if config.get('fallback'):
-                        output[name] = config.get('fallback')
+                        secret_value = config.get('fallback')
                     else:
                         raise MisconfigurationException(f"Secret {trimmed_value} is not found.")
+                output[name] = secret_value
+                if config.get("expand", "").lower() == "true":
+                    output.update(json.loads(secret_value))
+
             except (KeyError, IndexError):
                 raise MisconfigurationException(f"Secret {value} is malformed.")
             except json.JSONDecodeError:
