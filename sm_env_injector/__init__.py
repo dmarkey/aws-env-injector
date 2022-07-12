@@ -1,6 +1,7 @@
-import boto3
 import os
+import sys
 
+import boto3
 
 client = boto3.client("secretsmanager", endpoint_url=os.getenv("AWS_SECRETSMANAGER_ENDPOINT"))
 
@@ -16,7 +17,7 @@ def inject_secrets_into_env():
     for name, value in os.environ.items():
         if value.startswith(PREFIX):
             try:
-                trimmed_value = value[len(PREFIX)+1:]
+                trimmed_value = value[len(PREFIX) + 1:]
                 pairs = trimmed_value.split(",")
                 config = {z.split("=")[0]: z.split("=")[1] for z in pairs}
                 version = config.get("version")
@@ -40,7 +41,9 @@ def inject_secrets_into_env():
     return output
 
 
-if __name__ == "__main__":
-    processed_secrets = inject_secrets_into_env()
-    for x, y in processed_secrets.items():
-        print(f'{x}="{y}"')
+def main():
+    inject_secrets_into_env()
+    if len(sys.argv) == 1:
+        print("Please specify a command to spawn after secrets are loaded.")
+        sys.exit(1)
+    os.execvp(sys.argv[1], sys.argv[1:])
