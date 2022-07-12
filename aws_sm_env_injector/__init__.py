@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 
 import boto3
 
@@ -28,8 +29,10 @@ def inject_secrets_into_env():
                     else:
                         args['VersionId'] = version
                 try:
-                    value = client.get_secret_value(**args)
-                    output[name] = value['SecretString']
+                    secret_value = client.get_secret_value(**args)
+                    if config.get("mode") == "expand":
+                        output.update(json.loads(secret_value['SecretString']))
+                    output[name] = secret_value['SecretString']
                 except client.exceptions.ResourceNotFoundException:
                     if config.get('fallback'):
                         output[name] = config.get('fallback')
@@ -37,6 +40,8 @@ def inject_secrets_into_env():
                         raise MisconfigurationException(f"Secret {trimmed_value} is not found.")
             except (KeyError, IndexError):
                 raise MisconfigurationException(f"Secret {value} is malformed.")
+            except json.JSONDecodeError:
+                raise MisconfigurationException(f"Secret {value} is not valid JSON and has mode=expand.")
     os.environ.update(output)
     return output
 
