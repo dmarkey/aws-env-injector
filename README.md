@@ -45,8 +45,10 @@ It will scan all envirnment variables, for the `secretsmanager:` prefix. Aftet t
 
 With a version that's a stage
 `export SAMPLESECRET="secretsmanager-inject:name=foo,version=AWSCURRENT"`
-What a version that's a UUID
+
+With a version that's a UUID
 `export SAMPLESECRET="secretsmanager-inject:name=foo,version=1F4CBFF8-878F-4046-8E89-D9344F85AF69"`
+
 With a fallback value
 `export SAMPLESECRET="secretsmanager-inject:name=foo,version=1F4CBFF8-878F-4046-8E89-D9344F85AF69,fallback=myfallbackvalue"`
 
